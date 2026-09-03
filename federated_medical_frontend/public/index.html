@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="MedFed AI - Privacy-Preserving Federated Learning Medical Diagnosis Platform">
+    <title>MedFed AI | Privacy-Preserving Federated Diagnosis</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js for beautiful charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Background Glow Effects -->
+    <div class="bg-glow glow-1"></div>
+    <div class="bg-glow glow-2"></div>
+    <div class="bg-glow glow-3"></div>
+
+    <div class="app-wrapper">
+        <!-- Navigation Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <div class="logo-badge">
+                    <div class="logo-pulse"></div>
+                    <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                    </svg>
+                </div>
+                <div class="header-titles">
+                    <div class="title-row">
+                        <h1>MedFed <span>AI</span></h1>
+                        <span class="version-tag">FedAvg v2.4</span>
+                        <span class="security-tag">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
+                                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>
+                            </svg>
+                            Zero Data Leakage
+                        </span>
+                    </div>
+                    <p class="subtitle">Multi-Cloud Federated Learning for Privacy-Preserving Medical Diagnosis &bull; Group 10</p>
+                </div>
+            </div>
+
+            <div class="header-right">
+                <div class="status-cluster">
+                    <div class="status-pill">
+                        <span class="status-dot live"></span>
+                        <span>Central FedAvg Hub: <strong>Online</strong></span>
+                    </div>
+                    <div class="status-pill">
+                        <span class="status-dot active"></span>
+                        <span id="activeClientsHeader">4 Hospital Nodes Connected</span>
+                    </div>
+                </div>
+                <button id="btnExportReport" class="btn btn-outline" title="Export simulation metrics as JSON">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path>
+                    </svg>
+                    Export Report
+                </button>
+            </div>
+        </header>
+
+        <!-- KPI Metrics Ribbon -->
+        <section class="kpi-grid">
+            <div class="kpi-card" id="kpiAccuracy">
+                <div class="kpi-icon-wrap cyan">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <circle cx="12" cy="12" r="6"></circle>
+                        <circle cx="12" cy="12" r="2"></circle>
+                    </svg>
+                </div>
+                <div class="kpi-content">
+                    <span class="kpi-label">Federated Accuracy</span>
+                    <div class="kpi-val-row">
+                        <span class="kpi-value" id="valAccuracy">98.25%</span>
+                        <span class="kpi-delta positive" id="valAccuracyDelta">+1.76% vs Baseline</span>
+                    </div>
+                    <span class="kpi-caption">Centralized Baseline: 96.49%</span>
+                </div>
+            </div>
+
+            <div class="kpi-card" id="kpiF1">
+                <div class="kpi-icon-wrap emerald">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                    </svg>
+                </div>
+                <div class="kpi-content">
+                    <span class="kpi-label">F1-Score (Harmonic Mean)</span>
+                    <div class="kpi-val-row">
+                        <span class="kpi-value" id="valF1">0.9861</span>
+                        <span class="kpi-delta positive" id="valF1Delta">Optimal</span>
+                    </div>
+                    <span class="kpi-caption">Precision: 98.6% | Recall: 98.6%</span>
+                </div>
+            </div>
+
+            <div class="kpi-card" id="kpiComm">
+                <div class="kpi-icon-wrap purple">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                        <polyline points="22,6 12,13 2,6"></polyline>
+                    </svg>
+                </div>
+                <div class="kpi-content">
+                    <span class="kpi-label">Total Bandwidth Overhead</span>
+                    <div class="kpi-val-row">
+                        <span class="kpi-value" id="valComm">29.06 KB</span>
+                        <span class="kpi-delta neutral">Weights Only</span>
+                    </div>
+                    <span class="kpi-caption">99.4% Bandwidth Reduction</span>
+                </div>
+            </div>
+
+            <div class="kpi-card" id="kpiPrivacy">
+                <div class="kpi-icon-wrap amber">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                </div>
+                <div class="kpi-content">
+                    <span class="kpi-label">Privacy & Security Audit</span>
+                    <div class="kpi-val-row">
+                        <span class="kpi-value highlight-secure">0 Records</span>
+                        <span class="kpi-delta secure-badge">HIPAA Compliant</span>
+                    </div>
+                    <span class="kpi-caption">100% Patient Data On-Premise</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Dashboard Content Grid -->
+        <main class="dashboard-grid">
+            <!-- Left Column: Simulation Controls & Network Topology -->
+            <div class="grid-col col-left">
+                <!-- Training Controls Card -->
+                <div class="glass-panel" id="panelControls">
+                    <div class="panel-header">
+                        <div class="panel-title-wrap">
+                            <svg class="panel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                            </svg>
+                            <h2>Federated Training Simulator</h2>
+                        </div>
+                        <span class="badge-accent">FedAvg Algorithm</span>
+                    </div>
+
+                    <form id="flConfigForm" class="controls-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="inputClients">
+                                    <span>Hospital Clients</span>
+                                    <strong id="labelClients">4 Sites</strong>
+                                </label>
+                                <input type="range" id="inputClients" min="2" max="16" step="2" value="4">
+                                <div class="slider-marks">
+                                    <span>2</span>
+                                    <span>4</span>
+                                    <span>8</span>
+                                    <span>16</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="inputRounds">
+                                    <span>FedAvg Rounds</span>
+                                    <strong id="labelRounds">15 Rounds</strong>
+                                </label>
+                                <input type="range" id="inputRounds" min="5" max="30" step="5" value="15">
+                                <div class="slider-marks">
+                                    <span>5</span>
+                                    <span>15</span>
+                                    <span>20</span>
+                                    <span>30</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="inputEpochs">
+                                    <span>Local Epochs / Client</span>
+                                    <strong id="labelEpochs">1 Epoch</strong>
+                                </label>
+                                <input type="range" id="inputEpochs" min="1" max="5" step="1" value="1">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="selectDistribution">
+                                    <span>Data Distribution</span>
+                                </label>
+                                <select id="selectDistribution" class="custom-select">
+                                    <option value="true" selected>Non-IID (Skewed Patient Shards)</option>
+                                    <option value="false">IID (Uniform Distribution)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="button-action-row">
+                            <button type="submit" id="btnStartTraining" class="btn btn-primary btn-glow">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                </svg>
+                                <span>Train Federated Model</span>
+                            </button>
+                            <button type="button" id="btnBenchmarkScalability" class="btn btn-secondary">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M18 20V10M12 20V4M6 20v-6"></path>
+                                </svg>
+                                <span>Run Scalability Test</span>
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Training Progress Overlay -->
+                    <div id="trainingProgressWrap" class="progress-wrap hidden">
+                        <div class="progress-info">
+                            <span id="trainingStatusText">Aggregating hospital weights...</span>
+                            <span id="trainingPercentage">0%</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div id="trainingProgressBar" class="progress-bar-fill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Animated Multi-Cloud Network Topology -->
+                <div class="glass-panel" id="panelTopology">
+                    <div class="panel-header">
+                        <div class="panel-title-wrap">
+                            <svg class="panel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
+                            </svg>
+                            <h2>Multi-Cloud Network Architecture</h2>
+                        </div>
+                        <span class="live-flow-indicator">
+                            <span class="ping-circle"></span> Live Weight Sync
+                        </span>
+                    </div>
+
+                    <div class="topology-container" id="topologyContainer">
+                        <!-- Canvas animation layer for particles -->
+                        <canvas id="networkCanvas" class="network-canvas"></canvas>
+                        
+                        <!-- Center Aggregator Node -->
+                        <div class="topo-node center-hub" id="centerHubNode">
+                            <div class="hub-core">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                                    <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                                    <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                                    <line x1="6" y1="18" x2="6.01" y2="18"></line>
+                                </svg>
+                                <span>FedAvg Aggregator</span>
+                            </div>
+                            <div class="hub-radar"></div>
+                        </div>
+
+                        <!-- Hospital Client Nodes dynamically placed -->
+                        <div class="hospital-nodes-grid" id="hospitalNodesGrid">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+
+                    <div class="topology-legend">
+                        <div class="legend-item">
+                            <span class="legend-dot green"></span>
+                            <span>Local Patient Records (Isolated)</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-dot cyan"></span>
+                            <span>Model Weights ($\Delta W, \Delta b$)</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-dot purple"></span>
+                            <span>Aggregated Global Model</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Interactive Charts & Diagnostic Sandbox -->
+            <div class="grid-col col-right">
+                <!-- Analytics Charts Card -->
+                <div class="glass-panel" id="panelAnalytics">
+                    <div class="panel-header">
+                        <div class="panel-title-wrap">
+                            <svg class="panel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="20" x2="18" y2="10"></line>
+                                <line x1="12" y1="20" x2="12" y2="4"></line>
+                                <line x1="6" y1="20" x2="6" y2="14"></line>
+                            </svg>
+                            <h2>Convergence & Performance Telemetry</h2>
+                        </div>
+                        <div class="chart-tab-group">
+                            <button class="tab-btn active" data-chart="accuracy">Accuracy Curve</button>
+                            <button class="tab-btn" data-chart="metrics">F1 & Precision</button>
+                            <button class="tab-btn" data-chart="bandwidth">Bandwidth (KB)</button>
+                            <button class="tab-btn" data-chart="scalability">Scalability</button>
+                        </div>
+                    </div>
+
+                    <div class="chart-canvas-container">
+                        <canvas id="analyticsChart"></canvas>
+                    </div>
+
+                    <div class="chart-footer-metrics" id="chartFooterStats">
+                        <div class="stat-pill">
+                            <span>Peak Accuracy:</span>
+                            <strong id="statPeakAcc">98.25%</strong>
+                        </div>
+                        <div class="stat-pill">
+                            <span>Convergence Speed:</span>
+                            <strong id="statConvergence">Round 6</strong>
+                        </div>
+                        <div class="stat-pill">
+                            <span>Average Round Time:</span>
+                            <strong id="statAvgTime">5.2 ms</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Patient Diagnostic Inference Sandbox -->
+                <div class="glass-panel" id="panelPredictor">
+                    <div class="panel-header">
+                        <div class="panel-title-wrap">
+                            <svg class="panel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                            </svg>
+                            <h2>Privacy-Preserving Diagnostic Predictor</h2>
+                        </div>
+                        <span class="badge-medical">Live Model Inference</span>
+                    </div>
+
+                    <p class="section-desc">
+                        Test the federated global model on diagnostic breast cancer cytology features. Select a sample case preset or fine-tune biomarkers with sliders.
+                    </p>
+
+                    <!-- Presets Selector -->
+                    <div class="preset-buttons-row">
+                        <span class="preset-label">Case Presets:</span>
+                        <button type="button" class="preset-chip" id="presetMalignant">
+                            <span class="chip-dot red"></span> High-Risk Malignant
+                        </button>
+                        <button type="button" class="preset-chip" id="presetBenign">
+                            <span class="chip-dot green"></span> Typical Benign
+                        </button>
+                        <button type="button" class="preset-chip" id="presetBorderline">
+                            <span class="chip-dot amber"></span> Borderline Case
+                        </button>
+                        <button type="button" class="preset-chip" id="presetRandom">
+                            <span class="chip-dot cyan"></span> Random Case
+                        </button>
+                    </div>
+
+                    <!-- Interactive Diagnostic Sliders Grid -->
+                    <div class="biomarker-sliders-grid" id="biomarkersGrid">
+                        <!-- Populated via JS with key features -->
+                    </div>
+
+                    <!-- Diagnosis Result Banner -->
+                    <div class="diagnosis-result-card" id="diagnosisResultCard">
+                        <div class="result-main">
+                            <div class="result-icon-badge" id="diagnosisIconBadge">
+                                <svg id="diagnosisIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </div>
+                            <div class="result-meta">
+                                <span class="result-label">Diagnostic Classification</span>
+                                <h3 id="diagnosisText" class="result-title text-benign">Benign (Non-Cancerous)</h3>
+                                <p class="result-subtext" id="diagnosisSubtext">Confidence: 99.4% &bull; Low risk index</p>
+                            </div>
+                        </div>
+
+                        <div class="confidence-gauge-wrap">
+                            <div class="gauge-labels">
+                                <span>Malignant</span>
+                                <span>Benign</span>
+                            </div>
+                            <div class="gauge-bar-bg">
+                                <div id="gaugeBarFill" class="gauge-bar-fill" style="width: 95%;"></div>
+                            </div>
+                            <div class="gauge-values">
+                                <span id="probMalignantText">0.6%</span>
+                                <span id="probBenignText">99.4%</span>
+                            </div>
+                        </div>
+
+                        <!-- Top Biomarker Factors -->
+                        <div class="factors-breakdown" id="factorsBreakdown">
+                            <h4>Key Cytology Biomarkers Influencing Decision:</h4>
+                            <div class="factors-tags-list" id="factorsList">
+                                <!-- Tags inserted via JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Live Federated Audit Terminal -->
+        <section class="glass-panel audit-terminal-panel">
+            <div class="panel-header">
+                <div class="panel-title-wrap">
+                    <svg class="panel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="4 17 10 11 4 5"></polyline>
+                        <line x1="12" y1="19" x2="20" y2="19"></line>
+                    </svg>
+                    <h2>Federated Multi-Cloud Privacy & Audit Log</h2>
+                </div>
+                <button id="btnClearLog" class="btn btn-sm btn-ghost">Clear Log</button>
+            </div>
+            <div class="terminal-log-body" id="terminalLogBody">
+                <div class="log-line system">[SYSTEM] FedAvg Framework initialized with zero-knowledge data silo protocol.</div>
+                <div class="log-line success">[AUDIT] Hospital nodes verified: Mayo Clinic Node, Johns Hopkins Node, Cleveland Clinic Node, Stanford Health Node.</div>
+                <div class="log-line info">[FEDAVG] Aggregated model loaded. Accuracy: 98.25%, F1-Score: 0.9861.</div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>MedFed AI &bull; Cloud CIA Project Group 10 &bull; Privacy-Preserving Multi-Cloud Federated Framework</p>
+            <div class="footer-links">
+                <span>FedAvg Protocol</span>
+                <span>HIPAA Compliant Simulation</span>
+                <span>Scikit-Learn SGD Engine</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Custom Script -->
+    <script src="app.js"></script>
+</body>
+</html>
