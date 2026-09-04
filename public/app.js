@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function fetchInitialState() {
     const t0 = performance.now();
     try {
-        addLog('Connecting to MedFed AI Python backend (:5000)...', 'system');
+        addLog('Connecting to MedFed AI Python backend (:5050)...', 'system');
         const res = await fetch('/api/initial-state');
         const data = await res.json();
         const latency = Math.round(performance.now() - t0);

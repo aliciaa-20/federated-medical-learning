@@ -11,7 +11,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
-PORT = 5000
+PORT = 5050  # 5000 conflicts with macOS AirPlay Receiver
 RANDOM_SEED = 42
 np.random.seed(RANDOM_SEED)
 

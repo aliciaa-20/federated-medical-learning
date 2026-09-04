@@ -1,7 +1,7 @@
 import urllib.request
 import json
 
-base_url = "http://localhost:5000"
+base_url = "http://localhost:5050"
 
 print("1. Testing GET / (HTML delivery)...")
 req = urllib.request.urlopen(f"{base_url}/")
