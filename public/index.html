@@ -11,20 +11,20 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     
-    <!-- Chart.js for beautiful charts -->
+    <!-- Chart.js for visualization -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <!-- Custom CSS -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Background Glow Effects -->
+    <!-- Ambient Lighting Orbs -->
     <div class="bg-glow glow-1"></div>
     <div class="bg-glow glow-2"></div>
     <div class="bg-glow glow-3"></div>
 
     <div class="app-wrapper">
-        <!-- Navigation Header -->
+        <!-- Modern Streamlined Header -->
         <header class="app-header">
             <div class="header-left">
                 <div class="logo-badge">
@@ -36,12 +36,12 @@
                 <div class="header-titles">
                     <div class="title-row">
                         <h1>MedFed <span>AI</span></h1>
-                        <span class="version-tag">FedAvg v2.4</span>
+                        <span class="version-tag">FedAvg Engine</span>
                         <span class="security-tag">
-                            <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
+                            <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
                                 <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>
                             </svg>
-                            Zero Data Leakage
+                            HIPAA Compliant
                         </span>
                     </div>
                     <p class="subtitle">Multi-Cloud Federated Learning for Privacy-Preserving Medical Diagnosis &bull; Group 10</p>
@@ -49,18 +49,21 @@
             </div>
 
             <div class="header-right">
+                <!-- Live Backend Connection & Node Status -->
                 <div class="status-cluster">
-                    <div class="status-pill">
-                        <span class="status-dot live"></span>
-                        <span>Central FedAvg Hub: <strong>Online</strong></span>
+                    <div class="status-pill live-pill" id="backendStatusPill" title="Real-time backend API health status">
+                        <span class="status-dot live" id="backendStatusDot"></span>
+                        <span id="backendStatusText">Backend: Connected (Port 5000)</span>
                     </div>
                     <div class="status-pill">
                         <span class="status-dot active"></span>
                         <span id="activeClientsHeader">4 Hospital Nodes Connected</span>
                     </div>
                 </div>
-                <button id="btnExportReport" class="btn btn-outline" title="Export simulation metrics as JSON">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+
+                <!-- Export Action -->
+                <button id="btnExportReport" class="btn btn-outline" title="Export simulation telemetry as JSON">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path>
                     </svg>
                     Export Report
@@ -68,7 +71,38 @@
             </div>
         </header>
 
-        <!-- KPI Metrics Ribbon -->
+        <!-- View Segmented Mode Switcher -->
+        <nav class="view-nav-bar">
+            <div class="nav-segment-group">
+                <button class="nav-tab active" data-view="dashboard">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    Unified Dashboard
+                </button>
+                <button class="nav-tab" data-view="training">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
+                    </svg>
+                    Training & Network Hub
+                </button>
+                <button class="nav-tab" data-view="diagnostic">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                    </svg>
+                    Diagnostic Sandbox
+                </button>
+            </div>
+            <div class="nav-info-pill">
+                <span>Model Baseline:</span>
+                <strong id="navBaselineAcc">96.49% Acc</strong>
+            </div>
+        </nav>
+
+        <!-- Clean KPI Summary Ribbon -->
         <section class="kpi-grid">
             <div class="kpi-card" id="kpiAccuracy">
                 <div class="kpi-icon-wrap cyan">
@@ -84,7 +118,6 @@
                         <span class="kpi-value" id="valAccuracy">98.25%</span>
                         <span class="kpi-delta positive" id="valAccuracyDelta">+1.76% vs Baseline</span>
                     </div>
-                    <span class="kpi-caption">Centralized Baseline: 96.49%</span>
                 </div>
             </div>
 
@@ -95,12 +128,11 @@
                     </svg>
                 </div>
                 <div class="kpi-content">
-                    <span class="kpi-label">F1-Score (Harmonic Mean)</span>
+                    <span class="kpi-label">F1-Score</span>
                     <div class="kpi-val-row">
                         <span class="kpi-value" id="valF1">0.9861</span>
                         <span class="kpi-delta positive" id="valF1Delta">Optimal</span>
                     </div>
-                    <span class="kpi-caption">Precision: 98.6% | Recall: 98.6%</span>
                 </div>
             </div>
 
@@ -112,12 +144,11 @@
                     </svg>
                 </div>
                 <div class="kpi-content">
-                    <span class="kpi-label">Total Bandwidth Overhead</span>
+                    <span class="kpi-label">Bandwidth Overhead</span>
                     <div class="kpi-val-row">
                         <span class="kpi-value" id="valComm">29.06 KB</span>
                         <span class="kpi-delta neutral">Weights Only</span>
                     </div>
-                    <span class="kpi-caption">99.4% Bandwidth Reduction</span>
                 </div>
             </div>
 
@@ -129,20 +160,19 @@
                     </svg>
                 </div>
                 <div class="kpi-content">
-                    <span class="kpi-label">Privacy & Security Audit</span>
+                    <span class="kpi-label">Privacy Guarantee</span>
                     <div class="kpi-val-row">
-                        <span class="kpi-value highlight-secure">0 Records</span>
-                        <span class="kpi-delta secure-badge">HIPAA Compliant</span>
+                        <span class="kpi-value highlight-secure">0 Data Leaks</span>
+                        <span class="kpi-delta secure-badge">Encrypted</span>
                     </div>
-                    <span class="kpi-caption">100% Patient Data On-Premise</span>
                 </div>
             </div>
         </section>
 
-        <!-- Main Dashboard Content Grid -->
-        <main class="dashboard-grid">
-            <!-- Left Column: Simulation Controls & Network Topology -->
-            <div class="grid-col col-left">
+        <!-- Main Dashboard View Container -->
+        <main class="dashboard-grid" id="mainDashboardView">
+            <!-- Left Column: Training Controls & Network Architecture -->
+            <div class="grid-col col-left" id="sectionTrainingHub">
                 <!-- Training Controls Card -->
                 <div class="glass-panel" id="panelControls">
                     <div class="panel-header">
@@ -153,7 +183,7 @@
                             </svg>
                             <h2>Federated Training Simulator</h2>
                         </div>
-                        <span class="badge-accent">FedAvg Algorithm</span>
+                        <span class="badge-accent">FedAvg</span>
                     </div>
 
                     <form id="flConfigForm" class="controls-form">
@@ -201,24 +231,24 @@
                                     <span>Data Distribution</span>
                                 </label>
                                 <select id="selectDistribution" class="custom-select">
-                                    <option value="true" selected>Non-IID (Skewed Patient Shards)</option>
-                                    <option value="false">IID (Uniform Distribution)</option>
+                                    <option value="true" selected>Non-IID (Skewed Shards)</option>
+                                    <option value="false">IID (Uniform)</option>
                                 </select>
                             </div>
                         </div>
 
                         <div class="button-action-row">
                             <button type="submit" id="btnStartTraining" class="btn btn-primary btn-glow">
-                                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
                                     <polygon points="5 3 19 12 5 21 5 3"></polygon>
                                 </svg>
-                                <span>Train Federated Model</span>
+                                <span>Train Model</span>
                             </button>
                             <button type="button" id="btnBenchmarkScalability" class="btn btn-secondary">
-                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M18 20V10M12 20V4M6 20v-6"></path>
                                 </svg>
-                                <span>Run Scalability Test</span>
+                                <span>Scale Test</span>
                             </button>
                         </div>
                     </form>
@@ -245,7 +275,7 @@
                             <h2>Multi-Cloud Network Architecture</h2>
                         </div>
                         <span class="live-flow-indicator">
-                            <span class="ping-circle"></span> Live Weight Sync
+                            <span class="ping-circle"></span> Weight Sync
                         </span>
                     </div>
 
@@ -276,61 +306,22 @@
                     <div class="topology-legend">
                         <div class="legend-item">
                             <span class="legend-dot green"></span>
-                            <span>Local Patient Records (Isolated)</span>
+                            <span>Hospital Records (On-Premise)</span>
                         </div>
                         <div class="legend-item">
                             <span class="legend-dot cyan"></span>
-                            <span>Model Weights ($\Delta W, \Delta b$)</span>
+                            <span>Local Gradients (ΔW, Δb)</span>
                         </div>
                         <div class="legend-item">
                             <span class="legend-dot purple"></span>
-                            <span>Aggregated Global Model</span>
+                            <span>Aggregated Model</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Right Column: Interactive Charts & Diagnostic Sandbox -->
-            <div class="grid-col col-right">
-                <!-- Analytics Charts Card -->
-                <div class="glass-panel" id="panelAnalytics">
-                    <div class="panel-header">
-                        <div class="panel-title-wrap">
-                            <svg class="panel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="18" y1="20" x2="18" y2="10"></line>
-                                <line x1="12" y1="20" x2="12" y2="4"></line>
-                                <line x1="6" y1="20" x2="6" y2="14"></line>
-                            </svg>
-                            <h2>Convergence & Performance Telemetry</h2>
-                        </div>
-                        <div class="chart-tab-group">
-                            <button class="tab-btn active" data-chart="accuracy">Accuracy Curve</button>
-                            <button class="tab-btn" data-chart="metrics">F1 & Precision</button>
-                            <button class="tab-btn" data-chart="bandwidth">Bandwidth (KB)</button>
-                            <button class="tab-btn" data-chart="scalability">Scalability</button>
-                        </div>
-                    </div>
-
-                    <div class="chart-canvas-container">
-                        <canvas id="analyticsChart"></canvas>
-                    </div>
-
-                    <div class="chart-footer-metrics" id="chartFooterStats">
-                        <div class="stat-pill">
-                            <span>Peak Accuracy:</span>
-                            <strong id="statPeakAcc">98.25%</strong>
-                        </div>
-                        <div class="stat-pill">
-                            <span>Convergence Speed:</span>
-                            <strong id="statConvergence">Round 6</strong>
-                        </div>
-                        <div class="stat-pill">
-                            <span>Average Round Time:</span>
-                            <strong id="statAvgTime">5.2 ms</strong>
-                        </div>
-                    </div>
-                </div>
-
+            <!-- Right Column: Interactive Diagnostic Sandbox & Telemetry -->
+            <div class="grid-col col-right" id="sectionDiagnosticAndCharts">
                 <!-- Live Patient Diagnostic Inference Sandbox -->
                 <div class="glass-panel" id="panelPredictor">
                     <div class="panel-header">
@@ -340,24 +331,20 @@
                             </svg>
                             <h2>Privacy-Preserving Diagnostic Predictor</h2>
                         </div>
-                        <span class="badge-medical">Live Model Inference</span>
+                        <span class="badge-medical">Live Inference</span>
                     </div>
 
-                    <p class="section-desc">
-                        Test the federated global model on diagnostic breast cancer cytology features. Select a sample case preset or fine-tune biomarkers with sliders.
-                    </p>
-
-                    <!-- Presets Selector -->
+                    <!-- Clean Preset Chips -->
                     <div class="preset-buttons-row">
                         <span class="preset-label">Case Presets:</span>
+                        <button type="button" class="preset-chip active" id="presetBenign">
+                            <span class="chip-dot green"></span> Typical Benign
+                        </button>
                         <button type="button" class="preset-chip" id="presetMalignant">
                             <span class="chip-dot red"></span> High-Risk Malignant
                         </button>
-                        <button type="button" class="preset-chip" id="presetBenign">
-                            <span class="chip-dot green"></span> Typical Benign
-                        </button>
                         <button type="button" class="preset-chip" id="presetBorderline">
-                            <span class="chip-dot amber"></span> Borderline Case
+                            <span class="chip-dot amber"></span> Borderline
                         </button>
                         <button type="button" class="preset-chip" id="presetRandom">
                             <span class="chip-dot cyan"></span> Random Case
@@ -366,21 +353,31 @@
 
                     <!-- Interactive Diagnostic Sliders Grid -->
                     <div class="biomarker-sliders-grid" id="biomarkersGrid">
-                        <!-- Populated via JS with key features -->
+                        <!-- Primary essential biomarker sliders populated dynamically via JS -->
+                    </div>
+
+                    <!-- Toggle for additional features -->
+                    <div class="toggle-features-row">
+                        <button type="button" class="btn-text-toggle" id="btnToggleAllFeatures">
+                            <span id="toggleFeaturesText">Show Extended Biomarkers (10 features)</span>
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
                     </div>
 
                     <!-- Diagnosis Result Banner -->
                     <div class="diagnosis-result-card" id="diagnosisResultCard">
                         <div class="result-main">
                             <div class="result-icon-badge" id="diagnosisIconBadge">
-                                <svg id="diagnosisIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <svg id="diagnosisIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                     <polyline points="20 6 9 17 4 12"></polyline>
                                 </svg>
                             </div>
                             <div class="result-meta">
                                 <span class="result-label">Diagnostic Classification</span>
                                 <h3 id="diagnosisText" class="result-title text-benign">Benign (Non-Cancerous)</h3>
-                                <p class="result-subtext" id="diagnosisSubtext">Confidence: 99.4% &bull; Low risk index</p>
+                                <p class="result-subtext" id="diagnosisSubtext">Confidence: 99.4% &bull; Low risk profile</p>
                             </div>
                         </div>
 
@@ -407,6 +404,45 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Analytics Charts Card -->
+                <div class="glass-panel" id="panelAnalytics">
+                    <div class="panel-header">
+                        <div class="panel-title-wrap">
+                            <svg class="panel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="20" x2="18" y2="10"></line>
+                                <line x1="12" y1="20" x2="12" y2="4"></line>
+                                <line x1="6" y1="20" x2="6" y2="14"></line>
+                            </svg>
+                            <h2>Convergence Telemetry</h2>
+                        </div>
+                        <div class="chart-tab-group">
+                            <button class="tab-btn active" data-chart="accuracy">Accuracy</button>
+                            <button class="tab-btn" data-chart="metrics">F1 & Precision</button>
+                            <button class="tab-btn" data-chart="bandwidth">Bandwidth</button>
+                            <button class="tab-btn" data-chart="scalability">Scalability</button>
+                        </div>
+                    </div>
+
+                    <div class="chart-canvas-container">
+                        <canvas id="analyticsChart"></canvas>
+                    </div>
+
+                    <div class="chart-footer-metrics" id="chartFooterStats">
+                        <div class="stat-pill">
+                            <span>Peak Accuracy:</span>
+                            <strong id="statPeakAcc">98.25%</strong>
+                        </div>
+                        <div class="stat-pill">
+                            <span>Convergence:</span>
+                            <strong id="statConvergence">Round 6</strong>
+                        </div>
+                        <div class="stat-pill">
+                            <span>Round Latency:</span>
+                            <strong id="statAvgTime">5.2 ms</strong>
+                        </div>
+                    </div>
+                </div>
             </div>
         </main>
 
@@ -418,29 +454,29 @@
                         <polyline points="4 17 10 11 4 5"></polyline>
                         <line x1="12" y1="19" x2="20" y2="19"></line>
                     </svg>
-                    <h2>Federated Multi-Cloud Privacy & Audit Log</h2>
+                    <h2>Federated Privacy & Audit Log</h2>
                 </div>
                 <button id="btnClearLog" class="btn btn-sm btn-ghost">Clear Log</button>
             </div>
             <div class="terminal-log-body" id="terminalLogBody">
                 <div class="log-line system">[SYSTEM] FedAvg Framework initialized with zero-knowledge data silo protocol.</div>
-                <div class="log-line success">[AUDIT] Hospital nodes verified: Mayo Clinic Node, Johns Hopkins Node, Cleveland Clinic Node, Stanford Health Node.</div>
-                <div class="log-line info">[FEDAVG] Aggregated model loaded. Accuracy: 98.25%, F1-Score: 0.9861.</div>
+                <div class="log-line success">[AUDIT] Hospital nodes verified: Mayo Clinic, Johns Hopkins, Cleveland Clinic, Stanford Health.</div>
+                <div class="log-line info">[FEDAVG] Aggregated global weights synchronized. Ready for simulation.</div>
             </div>
         </section>
 
-        <!-- Footer -->
+        <!-- Streamlined Footer -->
         <footer class="app-footer">
             <p>MedFed AI &bull; Cloud CIA Project Group 10 &bull; Privacy-Preserving Multi-Cloud Federated Framework</p>
             <div class="footer-links">
                 <span>FedAvg Protocol</span>
-                <span>HIPAA Compliant Simulation</span>
-                <span>Scikit-Learn SGD Engine</span>
+                <span>Zero Data Leakage</span>
+                <span>Scikit-Learn Engine</span>
             </div>
         </footer>
     </div>
 
-    <!-- Custom Script -->
+    <!-- Application Script -->
     <script src="app.js"></script>
 </body>
 </html>

@@ -11,9 +11,12 @@ const state = {
     presets: {},
     featureValues: [],
     activeChartTab: 'accuracy',
+    activeViewMode: 'dashboard',
+    showExtendedFeatures: false,
     isTraining: false,
     particles: [],
     chartInstance: null,
+    backendConnected: true,
     hospitalNames: [
         "Mayo Clinic Node",
         "Johns Hopkins Node",
@@ -34,29 +37,36 @@ const state = {
     ]
 };
 
-// Key features displayed as interactive sliders
-const KEY_FEATURE_INDICES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+// Top 6 primary essential biomarkers for streamlined display
+const PRIMARY_FEATURE_INDICES = [0, 1, 2, 3, 4, 6]; 
+// Remaining key features for extended mode
+const EXTENDED_FEATURE_INDICES = [5, 7, 8, 9];
 
 // Initialize on DOM Load
 document.addEventListener('DOMContentLoaded', async () => {
+    initViewModes();
     initControls();
     initChartTabs();
     initTopology();
     await fetchInitialState();
     initPredictorPresets();
     initExportButton();
+    initFeatureToggle();
     renderBiomarkerSliders();
     triggerPrediction();
+    startBackendHeartbeat();
 });
 
 /* --------------------------------------------------------------------------
-   1. API Communication
+   1. API Communication & Backend Connection Verification
    -------------------------------------------------------------------------- */
 async function fetchInitialState() {
+    const t0 = performance.now();
     try {
-        addLog('Connecting to MedFed AI backend service...', 'system');
+        addLog('Connecting to MedFed AI Python backend (:5000)...', 'system');
         const res = await fetch('/api/initial-state');
         const data = await res.json();
+        const latency = Math.round(performance.now() - t0);
         
         state.baseline = data.baseline;
         state.currentModel = data.current_model;
@@ -67,16 +77,53 @@ async function fetchInitialState() {
         state.featureValues = [...data.preset_data.presets.benign.values];
         
         // Update UI
+        updateBackendStatus(true, latency);
         updateKPICards(state.currentModel, state.baseline);
         updateActiveClients(4);
+        document.getElementById('navBaselineAcc').textContent = `${(data.baseline.accuracy * 100).toFixed(2)}% Acc`;
         
         // Fetch default training history for charts
         await runTraining(4, 15, 1, true, 0.01, false);
-        addLog('Federated cluster synchronized. Central model ready.', 'success');
+        addLog(`Backend connected successfully (${latency}ms). Cluster ready.`, 'success');
     } catch (err) {
         console.error('Error fetching initial state:', err);
-        addLog(`Backend connection warning: ${err.message}. Using cached simulation state.`, 'warning');
+        updateBackendStatus(false);
+        addLog(`Backend warning: ${err.message}. Running in offline simulation mode.`, 'warning');
     }
+}
+
+function updateBackendStatus(online, latencyMs = 0) {
+    state.backendConnected = online;
+    const dot = document.getElementById('backendStatusDot');
+    const text = document.getElementById('backendStatusText');
+    const pill = document.getElementById('backendStatusPill');
+    
+    if (online) {
+        dot.className = 'status-dot live';
+        text.innerHTML = `Backend: <strong>Connected</strong> (${latencyMs ? latencyMs + 'ms' : 'Port 5000'})`;
+        pill.style.borderColor = 'rgba(16, 185, 129, 0.35)';
+    } else {
+        dot.className = 'status-dot offline';
+        text.innerHTML = `Backend: <strong>Disconnected</strong>`;
+        pill.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+    }
+}
+
+function startBackendHeartbeat() {
+    setInterval(async () => {
+        try {
+            const t0 = performance.now();
+            const res = await fetch('/api/initial-state');
+            if (res.ok) {
+                const latency = Math.round(performance.now() - t0);
+                updateBackendStatus(true, latency);
+            } else {
+                updateBackendStatus(false);
+            }
+        } catch {
+            updateBackendStatus(false);
+        }
+    }, 12000);
 }
 
 async function runTraining(numClients, rounds, localEpochs, nonIid, lr, animate = true) {
@@ -113,7 +160,6 @@ async function runTraining(numClients, rounds, localEpochs, nonIid, lr, animate 
         state.currentModel = data.final_metrics;
         
         if (animate) {
-            // Animate round-by-round progression for visual feedback
             const totalRounds = data.history.round.length;
             for (let i = 0; i < totalRounds; i++) {
                 const currentRound = data.history.round[i];
@@ -126,11 +172,10 @@ async function runTraining(numClients, rounds, localEpochs, nonIid, lr, animate 
                 progressPct.textContent = `${pct}%`;
                 progressText.textContent = `Round ${currentRound}/${totalRounds} | Acc: ${(acc * 100).toFixed(1)}% | F1: ${f1.toFixed(3)}`;
                 
-                addLog(`[FedAvg] Round ${currentRound}/${totalRounds} -> Global Acc: ${(acc * 100).toFixed(2)}%, F1: ${f1.toFixed(4)}, Bandwidth: ${comm} KB`, 'info');
+                addLog(`[FedAvg] Round ${currentRound}/${totalRounds} -> Global Acc: ${(acc * 100).toFixed(2)}%, F1: ${f1.toFixed(4)}, Comm: ${comm} KB`, 'info');
                 
-                // Trigger canvas pulse
                 burstParticles();
-                await new Promise(r => setTimeout(r, 60));
+                await new Promise(r => setTimeout(r, 55));
             }
             
             addLog(`Training Complete! Final Accuracy: ${(data.final_metrics.accuracy * 100).toFixed(2)}% (F1: ${data.final_metrics.f1_score.toFixed(4)})`, 'success');
@@ -138,7 +183,7 @@ async function runTraining(numClients, rounds, localEpochs, nonIid, lr, animate 
         
         updateKPICards(data.final_metrics, data.baseline);
         updateChart();
-        triggerPrediction(); // Refresh diagnostic prediction with new global weights
+        triggerPrediction();
     } catch (err) {
         console.error('Training failed:', err);
         addLog(`Training error: ${err.message}`, 'warning');
@@ -146,7 +191,7 @@ async function runTraining(numClients, rounds, localEpochs, nonIid, lr, animate 
         state.isTraining = false;
         if (animate) {
             btnSubmit.disabled = false;
-            setTimeout(() => progressWrap.classList.add('hidden'), 1200);
+            setTimeout(() => progressWrap.classList.add('hidden'), 1000);
         }
     }
 }
@@ -169,7 +214,43 @@ async function triggerPrediction() {
 }
 
 /* --------------------------------------------------------------------------
-   2. UI Controls & Event Listeners
+   2. View Segment Switcher (Simplified Modes)
+   -------------------------------------------------------------------------- */
+function initViewModes() {
+    const navTabs = document.querySelectorAll('.nav-tab');
+    const mainGrid = document.getElementById('mainDashboardView');
+    
+    navTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            navTabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            
+            const view = tab.dataset.view;
+            state.activeViewMode = view;
+            
+            mainGrid.className = 'dashboard-grid';
+            if (view === 'training') {
+                mainGrid.classList.add('mode-training');
+            } else if (view === 'diagnostic') {
+                mainGrid.classList.add('mode-diagnostic');
+            }
+            
+            // Resize canvas or chart when layout shifts
+            if (view === 'training' || view === 'dashboard') {
+                setTimeout(() => {
+                    initCanvasParticles();
+                    renderHospitalNodes(parseInt(document.getElementById('inputClients').value) || 4);
+                }, 50);
+            }
+            if (state.chartInstance) {
+                setTimeout(() => state.chartInstance.resize(), 50);
+            }
+        });
+    });
+}
+
+/* --------------------------------------------------------------------------
+   3. UI Controls & Event Listeners
    -------------------------------------------------------------------------- */
 function initControls() {
     const inputClients = document.getElementById('inputClients');
@@ -244,7 +325,7 @@ function updateKPICards(metrics, baseline) {
     const diff = (metrics.accuracy - baseline.accuracy) * 100;
     
     valAcc.textContent = `${accPct}%`;
-    valAccDelta.textContent = `${diff >= 0 ? '+' : ''}${diff.toFixed(2)}% vs Baseline (${basePct}%)`;
+    valAccDelta.textContent = `${diff >= 0 ? '+' : ''}${diff.toFixed(2)}% vs Baseline`;
     valAccDelta.className = `kpi-delta ${diff >= 0 ? 'positive' : 'neutral'}`;
     
     valF1.textContent = metrics.f1_score.toFixed(4);
@@ -254,13 +335,30 @@ function updateKPICards(metrics, baseline) {
 }
 
 /* --------------------------------------------------------------------------
-   3. Interactive Diagnostic Sliders & Presets
+   4. Diagnostic Biomarker Sliders & Presets
    -------------------------------------------------------------------------- */
+function initFeatureToggle() {
+    const btn = document.getElementById('btnToggleAllFeatures');
+    const text = document.getElementById('toggleFeaturesText');
+    
+    btn.addEventListener('click', () => {
+        state.showExtendedFeatures = !state.showExtendedFeatures;
+        text.textContent = state.showExtendedFeatures ? 
+            'Show Essential Biomarkers Only (6 features)' : 
+            'Show Extended Biomarkers (10 features)';
+        renderBiomarkerSliders();
+    });
+}
+
 function renderBiomarkerSliders() {
     const container = document.getElementById('biomarkersGrid');
     container.innerHTML = '';
     
-    KEY_FEATURE_INDICES.forEach((idx) => {
+    const activeIndices = state.showExtendedFeatures ? 
+        [...PRIMARY_FEATURE_INDICES, ...EXTENDED_FEATURE_INDICES] : 
+        PRIMARY_FEATURE_INDICES;
+    
+    activeIndices.forEach((idx) => {
         const feat = state.features[idx];
         if (!feat) return;
         
@@ -268,7 +366,7 @@ function renderBiomarkerSliders() {
         box.className = 'slider-box';
         
         const cleanName = feat.name.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
-        const currentVal = state.featureValues[idx] || feat.mean;
+        const currentVal = state.featureValues[idx] !== undefined ? state.featureValues[idx] : feat.mean;
         const step = ((feat.max - feat.min) / 100).toFixed(3);
         
         box.innerHTML = `
@@ -297,7 +395,8 @@ function renderBiomarkerSliders() {
 }
 
 function updateSliderValues() {
-    KEY_FEATURE_INDICES.forEach(idx => {
+    const allIndices = [...PRIMARY_FEATURE_INDICES, ...EXTENDED_FEATURE_INDICES];
+    allIndices.forEach(idx => {
         const slider = document.getElementById(`slider_${idx}`);
         const display = document.getElementById(`valDisplay_${idx}`);
         if (slider && display && state.featureValues[idx] !== undefined) {
@@ -331,7 +430,7 @@ function initPredictorPresets() {
             state.featureValues = [...state.presets.malignant.values];
             updateSliderValues();
             triggerPrediction();
-            addLog('Loaded patient preset: High-Risk Malignant Cytology Case.', 'info');
+            addLog('Loaded clinical case: High-Risk Malignant Cytology.', 'info');
         }
     });
     
@@ -341,18 +440,17 @@ function initPredictorPresets() {
             state.featureValues = [...state.presets.benign.values];
             updateSliderValues();
             triggerPrediction();
-            addLog('Loaded patient preset: Typical Benign Cytology Case.', 'info');
+            addLog('Loaded clinical case: Typical Benign Cytology.', 'info');
         }
     });
     
     btnBorderline.addEventListener('click', () => {
         setActive(btnBorderline);
         if (state.presets.malignant && state.presets.benign) {
-            // Compute intermediate values between malignant and benign
             state.featureValues = state.presets.malignant.values.map((m, i) => (m + state.presets.benign.values[i]) / 2);
             updateSliderValues();
             triggerPrediction();
-            addLog('Loaded patient preset: Borderline Diagnostic Case.', 'info');
+            addLog('Loaded clinical case: Borderline Diagnostic Profile.', 'info');
         }
     });
     
@@ -361,7 +459,7 @@ function initPredictorPresets() {
         state.featureValues = state.features.map(f => f.min + Math.random() * (f.max - f.min));
         updateSliderValues();
         triggerPrediction();
-        addLog('Loaded random synthetic patient biopsy profile.', 'info');
+        addLog('Generated synthetic patient biopsy biomarker profile.', 'info');
     });
 }
 
@@ -387,7 +485,7 @@ function renderPredictionResult(res) {
         card.classList.add('malignant-state');
         title.className = 'result-title text-malignant';
         title.textContent = 'Malignant (High Risk)';
-        subtext.textContent = `Confidence: ${res.confidence_percent}% • Diagnostic indicators require review`;
+        subtext.textContent = `Confidence: ${res.confidence_percent}% • Indicators require immediate clinical review`;
         iconBadge.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`;
     }
     
@@ -395,10 +493,9 @@ function renderPredictionResult(res) {
     probMal.textContent = `${res.prob_malignant}%`;
     probBen.textContent = `${res.prob_benign}%`;
     
-    // Top contributing biomarkers
     factorsList.innerHTML = '';
     if (res.top_factors && res.top_factors.length > 0) {
-        res.top_factors.forEach(f => {
+        res.top_factors.slice(0, 4).forEach(f => {
             const tag = document.createElement('span');
             const isFavorsBenign = f.impact.includes('Benign');
             tag.className = `factor-tag ${isFavorsBenign ? 'benign-factor' : 'malignant-factor'}`;
@@ -409,7 +506,7 @@ function renderPredictionResult(res) {
 }
 
 /* --------------------------------------------------------------------------
-   4. Chart.js Visualization & Tabs
+   5. Chart.js Telemetry Visualization
    -------------------------------------------------------------------------- */
 function initChartTabs() {
     const tabBtns = document.querySelectorAll('.tab-btn');
@@ -447,25 +544,25 @@ function updateChart() {
         state.chartInstance = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: rounds.map(r => `Round ${r}`),
+                labels: rounds.map(r => `R${r}`),
                 datasets: [
                     {
-                        label: 'Federated Model Accuracy',
+                        label: 'Federated Accuracy',
                         data: state.history.accuracy.map(a => a * 100),
                         borderColor: '#06b6d4',
                         backgroundColor: 'rgba(6, 182, 212, 0.12)',
-                        borderWidth: 2.5,
+                        borderWidth: 2.2,
                         fill: true,
                         tension: 0.35,
                         pointBackgroundColor: '#06b6d4',
-                        pointRadius: 4
+                        pointRadius: 3
                     },
                     {
-                        label: `Centralized Baseline (${(state.baseline.accuracy * 100).toFixed(1)}%)`,
+                        label: `Central Baseline (${(state.baseline.accuracy * 100).toFixed(1)}%)`,
                         data: rounds.map(() => state.baseline.accuracy * 100),
                         borderColor: '#ef4444',
-                        borderWidth: 2,
-                        borderDash: [5, 5],
+                        borderWidth: 1.8,
+                        borderDash: [4, 4],
                         pointRadius: 0,
                         fill: false
                     }
@@ -497,13 +594,13 @@ function updateChart() {
         state.chartInstance = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: rounds.map(r => `Round ${r}`),
+                labels: rounds.map(r => `R${r}`),
                 datasets: [
                     {
                         label: 'F1-Score',
                         data: state.history.f1,
                         borderColor: '#10b981',
-                        borderWidth: 2.5,
+                        borderWidth: 2.2,
                         tension: 0.3,
                         pointRadius: 3
                     },
@@ -513,7 +610,7 @@ function updateChart() {
                         borderColor: '#8b5cf6',
                         borderWidth: 2,
                         tension: 0.3,
-                        pointRadius: 3
+                        pointRadius: 2.5
                     },
                     {
                         label: 'Recall',
@@ -521,7 +618,7 @@ function updateChart() {
                         borderColor: '#f59e0b',
                         borderWidth: 2,
                         tension: 0.3,
-                        pointRadius: 3
+                        pointRadius: 2.5
                     }
                 ]
             },
@@ -539,7 +636,7 @@ function updateChart() {
         state.chartInstance = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: rounds.map(r => `Round ${r}`),
+                labels: rounds.map(r => `R${r}`),
                 datasets: [
                     {
                         label: 'Cumulative Bandwidth (KB)',
@@ -573,7 +670,7 @@ function updateChart() {
                 labels: clientLabels,
                 datasets: [
                     {
-                        label: 'Final Test Accuracy (%)',
+                        label: 'Test Accuracy (%)',
                         data: accData,
                         backgroundColor: 'rgba(6, 182, 212, 0.45)',
                         borderColor: '#06b6d4',
@@ -603,7 +700,7 @@ function updateScalabilityChart(results) {
 }
 
 /* --------------------------------------------------------------------------
-   5. Network Topology & Canvas Particle Animation
+   6. Network Topology & Canvas Particle Animation
    -------------------------------------------------------------------------- */
 function initTopology() {
     renderHospitalNodes(4);
@@ -612,16 +709,16 @@ function initTopology() {
 
 function renderHospitalNodes(count) {
     const grid = document.getElementById('hospitalNodesGrid');
+    if (!grid) return;
     grid.innerHTML = '';
     
-    // Position hospital nodes in a circular or perimeter layout around the center hub
     const container = document.getElementById('topologyContainer');
-    const width = container.clientWidth || 410;
-    const height = container.clientHeight || 270;
+    const width = container.clientWidth || 400;
+    const height = container.clientHeight || 240;
     const centerX = width / 2;
     const centerY = height / 2;
     const radiusX = width * 0.38;
-    const radiusY = height * 0.36;
+    const radiusY = height * 0.35;
     
     state.hospitalNodePositions = [];
     
@@ -634,8 +731,8 @@ function renderHospitalNodes(count) {
         
         const node = document.createElement('div');
         node.className = 'hospital-node';
-        node.style.left = `${x - 60}px`;
-        node.style.top = `${y - 20}px`;
+        node.style.left = `${x - 55}px`;
+        node.style.top = `${y - 18}px`;
         
         const name = state.hospitalNames[i] || `Hospital Node #${i + 1}`;
         
@@ -647,7 +744,7 @@ function renderHospitalNodes(count) {
             </div>
             <div class="hospital-meta">
                 <span class="hospital-name">${name.replace(' Node', '')}</span>
-                <span class="hospital-shards">Data Silo (Encrypted)</span>
+                <span class="hospital-shards">Data Silo</span>
             </div>
         `;
         
@@ -658,6 +755,7 @@ function renderHospitalNodes(count) {
 function initCanvasParticles() {
     const canvas = document.getElementById('networkCanvas');
     const container = document.getElementById('topologyContainer');
+    if (!canvas || !container) return;
     
     const resizeCanvas = () => {
         canvas.width = container.clientWidth;
@@ -672,8 +770,7 @@ function initCanvasParticles() {
     
     const ctx = canvas.getContext('2d');
     
-    // Spawn initial continuous particles
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 18; i++) {
         spawnParticle();
     }
     
@@ -683,19 +780,17 @@ function initCanvasParticles() {
         const centerX = canvas.width / 2;
         const centerY = canvas.height / 2;
         
-        // Draw static connecting lines between center hub and hospital nodes
         if (state.hospitalNodePositions) {
             state.hospitalNodePositions.forEach(pos => {
                 ctx.beginPath();
                 ctx.moveTo(centerX, centerY);
                 ctx.lineTo(pos.x, pos.y);
-                ctx.strokeStyle = 'rgba(6, 182, 212, 0.15)';
+                ctx.strokeStyle = 'rgba(6, 182, 212, 0.14)';
                 ctx.lineWidth = 1;
                 ctx.stroke();
             });
         }
         
-        // Update and draw particles
         for (let i = state.particles.length - 1; i >= 0; i--) {
             const p = state.particles[i];
             p.progress += p.speed;
@@ -712,7 +807,7 @@ function initCanvasParticles() {
             ctx.beginPath();
             ctx.arc(currentX, currentY, p.radius, 0, Math.PI * 2);
             ctx.fillStyle = p.color;
-            ctx.shadowBlur = 8;
+            ctx.shadowBlur = 6;
             ctx.shadowColor = p.color;
             ctx.fill();
             ctx.shadowBlur = 0;
@@ -754,13 +849,13 @@ function spawnParticle(isBurst = false) {
 }
 
 function burstParticles() {
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < 12; i++) {
         spawnParticle(true);
     }
 }
 
 /* --------------------------------------------------------------------------
-   6. Export & Logging Utilities
+   7. Export & Logging
    -------------------------------------------------------------------------- */
 function initExportButton() {
     document.getElementById('btnExportReport').addEventListener('click', () => {
